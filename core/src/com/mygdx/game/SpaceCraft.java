@@ -7,29 +7,25 @@ import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.Align;
 import space.earlygrey.shapedrawer.ShapeDrawer;
 
-public class SpaceCraft extends Actor {
-    Texture texture;
-    int width;
-    int height;
-    int bulletX,bulletY;
-    boolean launched;
-    private boolean alive;
+import java.util.HashMap;
 
-    SpaceCraft(){
+public class SpaceCraft extends Actor {
+    Bullet bullet;
+    SpaceCraft(Bullet bullet){
         super();
         setSize(40,40);
-        launched = false;
-        alive = true;
-
+        this.bullet = bullet;
     }
 
     @Override
     public void draw(Batch batch, float parentAlpha){
-        update();
         Pixmap pixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
         pixmap.setColor(Color.WHITE);
         pixmap.drawPixel(0, 0);
@@ -38,30 +34,30 @@ public class SpaceCraft extends Actor {
         TextureRegion region = new TextureRegion(texture, 0, 0, 1, 1);
         ShapeDrawer schdr = new ShapeDrawer(batch, region);
         schdr.setColor(Color.BLACK);
-        schdr.filledRectangle(getX(),getY(),getWidth(),getHeight());
-        schdr.filledRectangle(getX() + getWidth()/2 - 10,bulletY,10,30);
-        schdr.setColor(Color.WHITE);
-        if (alive)
-            schdr.filledRectangle(40,400,40,40);
+        schdr.filledRectangle(getX(),getY(),getWidth()/3,getHeight()/2);
+        schdr.filledRectangle(getX()+getWidth()/3,getY(),getWidth()/3,getHeight());
+        schdr.filledRectangle(getX()+getWidth()/3*2,getY(),getWidth()/3,getHeight()/2);
     }
-    public void update(){
+    public void update(Stage stg){
         if (Gdx.input.isKeyPressed(Input.Keys.RIGHT) && this.getX() != Gdx.graphics.getWidth()-this.getWidth()){
-            this.setX(this.getX()+10);
+            this.moveBy(5,0);
         }
         if (Gdx.input.isKeyPressed(Input.Keys.LEFT) && this.getX() != 0){
-            this.setX(this.getX()-10);
+            this.moveBy(-5,0);
         }
         if (Gdx.input.isKeyPressed(Input.Keys.SPACE)){
-            System.out.println(bulletX);
-                //if (!launched)
-                    bulletX = (int)this.getX();
-                launched = true;
+            if(!stg.getActors().contains(bullet,true)){
+                bullet.setPosition(getX() + (int)getWidth()/2,0);
+                bullet.bounds.x = getX();
+                bullet.bounds.y = getY();
+                stg.addActor(bullet);
+            }
         }
-        if (launched)
-            bulletY += 1;
-        if (bulletY == Gdx.graphics.getHeight())
-            launched = false;
-        if (bulletY == 360)
-            alive = false;
+        if (bullet.getY() == Gdx.graphics.getHeight()){
+            stg.getRoot().removeActor(bullet);
+        }
+    }
+    boolean touchesAlien(int x, int y, Vector2 alienPos){
+        return x <= alienPos.x + 40 && x >= alienPos.x && y == alienPos.y - 20;
     }
 }
